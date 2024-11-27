@@ -3,6 +3,7 @@
  */
 
 include { SNIFFLES                              } from '../../modules/local/sniffles'
+include { SNIFFLES_FIX_HEADER                   } from '../../modules/local/sniffles_fix_header'
 include { BCFTOOLS_SORT as SNIFFLES_SORT_VCF    } from '../../modules/nf-core/bcftools/sort/main'
 include { TABIX_BGZIP as SNIFFLES_BGZIP_VCF     } from '../../modules/nf-core/tabix/bgzip/main'
 include { TABIX_TABIX as SNIFFLES_TABIX_VCF     } from '../../modules/nf-core/tabix/tabix/main'
@@ -37,9 +38,15 @@ workflow STRUCTURAL_VARIANT_CALLING {
         ch_versions = ch_versions.mix(SNIFFLES.out.versions)
 
         /*
+         * Fix the header of the vcf file containing the structural variants called by sniffles
+         */
+        SNIFFLES_FIX_HEADER( SNIFFLES.out.sv_calls )
+        ch_versions = ch_versions.mix(SNIFFLES_FIX_HEADER.out.versions)
+
+        /*
          * Sort structural variants with bcftools
          */
-        SNIFFLES_SORT_VCF( SNIFFLES.out.sv_calls )
+        SNIFFLES_SORT_VCF( SNIFFLES_FIX_HEADER.out.sv_calls_fixed )
         ch_sv_calls_vcf = SNIFFLES_SORT_VCF.out.vcf
         ch_versions = ch_versions.mix(SNIFFLES_SORT_VCF.out.versions)
 
@@ -47,7 +54,7 @@ workflow STRUCTURAL_VARIANT_CALLING {
          * Index sniffles vcf.gz
          */
         SNIFFLES_TABIX_VCF( ch_sv_calls_vcf )
-        ch_sv_calls_tbi  = SNIFFLES_TABIX_VCF.out.tbi
+        ch_sv_calls_tbi = SNIFFLES_TABIX_VCF.out.tbi
         ch_versions = ch_versions.mix(SNIFFLES_TABIX_VCF.out.versions)
 
     } else if (params.structural_variant_caller == 'cutesv') {
