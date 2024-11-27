@@ -38,7 +38,7 @@ workflow STRUCTURAL_VARIANT_CALLING {
         ch_versions = ch_versions.mix(SNIFFLES.out.versions)
 
         /*
-         * Fix the header of the vcf file containing the structural variants called by sniffles
+         * Fix the header of the sniffles vcf file
          */
         SNIFFLES_FIX_HEADER( SNIFFLES.out.sv_calls )
         ch_versions = ch_versions.mix(SNIFFLES_FIX_HEADER.out.versions)
